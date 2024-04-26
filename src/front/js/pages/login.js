@@ -92,6 +92,7 @@ export const Login = () => {
                 </>
             );
         }
+    }
 
     return(
         <section className="h-100 gradient-form" style={{backgroundColor: "#eee"}}>
