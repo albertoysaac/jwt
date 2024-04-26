@@ -38,9 +38,9 @@ def login():
     
     if email != user.email or password != user.password:
         return jsonify({"msg": "Bad username or password"}), 401
-
-    access_token = create_access_token(identity=email)
-    return jsonify(access_token=access_token)
+    else:
+        access_token = create_access_token(identity=email)
+        return jsonify(access_token=access_token)
 
 @api.route('/users', methods=['GET'])
 @jwt_required()
