@@ -1,52 +1,71 @@
+import { Login } from "../pages/login";
+
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
 			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			jwt: "",
+			
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			queryHandler: async (url, method, body) => {
+				const config = {
+					method: method,
+					headers: {
+						"Content-Type": "application/json",
+					},
+				};
+
+				if (getStore().store.jwt !== "" || getStore().store.jwt !== undefined) {
+					config = {
+						method: method,
+						body: JSON.stringify(body),
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: getStore().store.jwt,
+						},
+					};
+				}
+				else if (body) {
+					config.body = JSON.stringify(body);
+				}
+				
+				const response = await fetch(url, config);
+				const data = await response.json();
+				if (data.msg) {
+					setStore({ message: data.msg });
+				}
+				return data;
 			},
 
-			getMessage: async () => {
-				try{
-					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "/api/hello")
-					const data = await resp.json()
-					setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
-					return data;
-				}catch(error){
-					console.log("Error loading message from backend", error)
+			signup: async (name, last_name, age, email, password) => {
+				const url = "https://refactored-space-disco-p4w6px6jjq6h6vp9-3001.app.github.dev/api/signup";
+				const method = "POST";
+				const body = {
+					name: name,
+					last_name: last_name,
+					age: age,
+					email: email,
+					password: password,
+				};
+				const data = await getActions().queryHandler(url, method, body);
+				if (data.msg) {
+					setStore({ message: data.msg });
 				}
 			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
-
-				//reset the global store
-				setStore({ demo: demo });
-			}
+			login: async (email, password) => {
+				const url = "https://refactored-space-disco-p4w6px6jjq6h6vp9-3001.app.github.dev/api/login";
+				const method = "POST";
+				const body = {
+					email: email,
+					password: password,
+				};
+				const data = await getActions().queryHandler(url, method, body);
+				if (data.access_token) {
+					setStore({ jwt: data.access_token });
+				}
+			},
 		}
 	};
 };
