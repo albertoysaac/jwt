@@ -16,7 +16,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 					},
 				};
 
-				if (getStore().store.jwt !== "") {
+				if (getStore().store.jwt !== "" || getStore().store.jwt !== undefined) {
 					config = {
 						method: method,
 						body: JSON.stringify(body),
@@ -38,10 +38,13 @@ const getState = ({ getStore, getActions, setStore }) => {
 				return data;
 			},
 
-			signup: async (email, password) => {
+			signup: async (name, last_name, age, email, password) => {
 				const url = "https://refactored-space-disco-p4w6px6jjq6h6vp9-3001.app.github.dev/api/signup";
 				const method = "POST";
 				const body = {
+					name: name,
+					last_name: last_name,
+					age: age,
 					email: email,
 					password: password,
 				};
