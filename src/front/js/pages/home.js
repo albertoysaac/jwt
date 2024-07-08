@@ -17,7 +17,7 @@ export const Home = () => {
 	return (
 		<div className="text-center mt-5">
 			<h1>Sistema de administracion de usuarios</h1>
-			<table>
+			<table className="table table-dark table-striped-columns">
 				<thead>
 					<tr>
 						<th scope="col">ID #</th>
