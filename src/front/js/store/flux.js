@@ -5,65 +5,97 @@ const getState = ({ getStore, getActions, setStore }) => {
 		store: {
 			message: null,
 			jwt: "",
+			users: [],
 			
 		},
 		actions: {
-			queryHandler: async (url, method, body) => {
-				const config = {
+			queryHandler: async (url, method, body, authReq) => {
+				console.log("queryHandler: ", url, method, body, authReq);
+				let config = {
 					method: method,
+					mode: "no-cors",
 					headers: {
-						"Content-Type": "application/json",
-					},
+						"Content-type": "application/json",
+						'Access-Control-Allow-Origin': '*',
+					}
 				};
 
-				if (getStore().store.jwt !== "" || getStore().store.jwt !== undefined) {
+				if (body !== null) {
+					if(!authReq){
+						config = {
+							method: method,
+							body: JSON.stringify(body),
+							headers: {
+								"Content-type": "application/json",
+								'Access-Control-Allow-Origin': '*',
+							}
+						};
+					}
+					else{
+						config = {
+							method: method,
+							body: JSON.stringify(body),
+							headers: {
+								"Content-type": "application/json",
+								'Access-Control-Allow-Origin': '*',
+								'Authorization': 'Bearer ' + getStore().jwt
+							}
+						};
+					}
+				}
+				else if (!body && getStore().jwt !== "" && authReq) {
 					config = {
 						method: method,
-						body: JSON.stringify(body),
 						headers: {
-							"Content-Type": "application/json",
-							Authorization: getStore().store.jwt,
-						},
+							"Content-type": "application/json",
+							'Access-Control-Allow-Origin': '*',
+							'Authorization': 'Bearer ' + getStore().jwt
+						}
 					};
 				}
-				else if (body) {
-					config.body = JSON.stringify(body);
-				}
-				
+				console.log("endpoint: ", url);
+				console.log("config: ", config);
 				const response = await fetch(url, config);
-				const data = await response.json();
-				if (data.msg) {
-					setStore({ message: data.msg });
-				}
+				const data = {"status":response.status,"data" : await response.json()}
+				console.log("queryResponse: ", data);
 				return data;
 			},
 
-			signup: async (name, last_name, age, email, password) => {
-				const url = "https://refactored-space-disco-p4w6px6jjq6h6vp9-3001.app.github.dev/api/signup";
+			signup: async (body) => {
+				console.log(body);
+				const url = "https://turbo-fishstick-jj5g4j4q5w72q94j-3001.app.github.dev/api/signup";
 				const method = "POST";
-				const body = {
-					name: name,
-					last_name: last_name,
-					age: age,
-					email: email,
-					password: password,
-				};
-				const data = await getActions().queryHandler(url, method, body);
-				if (data.msg) {
-					setStore({ message: data.msg });
+				const data = await getActions().queryHandler(url, method, body, false);
+				if (data.status === 200) {
+					console.log(data);
+					setStore({ jwt: data.data.access_token });
+					return true;
+				}
+				if (data.status === 400) {
+					return data.data;
 				}
 			},
 
-			login: async (email, password) => {
-				const url = "https://refactored-space-disco-p4w6px6jjq6h6vp9-3001.app.github.dev/api/login";
+			login: async (body) => {
+				const url = "https://turbo-fishstick-jj5g4j4q5w72q94j-3001.app.github.dev/api/login";
 				const method = "POST";
-				const body = {
-					email: email,
-					password: password,
-				};
-				const data = await getActions().queryHandler(url, method, body);
-				if (data.access_token) {
-					setStore({ jwt: data.access_token });
+				const data = await getActions().queryHandler(url, method, body, false);
+				if (data.status === 200) {
+					setStore({ jwt: data.data.access_token });
+					return true;
+				}
+				else {
+					return false;
+				}
+			},
+
+			getUsers: async () =>{
+				const url = "https://turbo-fishstick-jj5g4j4q5w72q94j-3001.app.github.dev/api/users";
+				const method = "GET"
+				const data = await getActions().queryHandler(url,method,null,true);
+				if(data.status === 200){
+					setStore({users: data.data});
+					return true;
 				}
 			},
 		}

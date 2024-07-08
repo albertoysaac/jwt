@@ -28,7 +28,7 @@ export const Login = () => {
                                 <h4 className="mt-1 mb-5 pb-1">We are The Lotus Team</h4>
                             </div>
 
-                            <LoginForm type = {content} />
+                            <LoginForm/>
 
 
                             

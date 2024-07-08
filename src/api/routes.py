@@ -20,27 +20,30 @@ CORS(api)
 @api.route('/signup', methods=['POST'])
 def signup():
     request_body = request.get_json()
+    print(request_body)
     if User.query.filter_by(email=request_body["email"]).first():
         return jsonify({"msg": "User already exists"}), 400
     else:
-        user = User(names=request_body["name"], last_name=request_body["last_name"], age = request_body["age"],
-                email=request_body["email"], password=request_body["password"], is_active=True)
+        user = User(names=request_body["names"], last_name=request_body["last_name"], age = request_body["age"],
+                email=request_body["email"], password=request_body["password"])
         db.session.add(user)
         db.session.commit()
-        return jsonify({"msg": "User created"}), 200
+        access_token = create_access_token(identity=user.id)
+        return jsonify(access_token=access_token), 200
     
 
 @api.route("/login", methods=["POST"])
 def login():
-    email = request.json.get("email")
-    password = request.json.get("password")
-    user = User.query.filter_by(email=email).first()
+    data = request.get_json()
+    print(data)
+    user = User.query.filter_by(email=data["email"]).first()
     
-    if email != user.email or password != user.password:
+    if not user or data["password"] != user.password:
         return jsonify({"msg": "Bad username or password"}), 401
     else:
-        access_token = create_access_token(identity=email)
+        access_token = create_access_token(identity=user.id)
         return jsonify(access_token=access_token)
+
 
 @api.route('/users', methods=['GET'])
 @jwt_required()
@@ -48,3 +51,4 @@ def get_users():
     users = User.query.all()
     users = list(map(lambda user: user.serialize(), users))
     return jsonify(users), 200
+

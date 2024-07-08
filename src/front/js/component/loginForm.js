@@ -1,38 +1,87 @@
-import React from "react";
+import React, { act } from "react";
 import { useContext , useState, useEffect } from "react";
 import { Context } from "../store/appContext";
-import { User } from "../model/user.js";
-import { validate } from "webpack";
+import { useNavigate } from "react-router-dom";
 
 export const LoginForm = props => {
     const { store, actions } = useContext(Context);
     const [name, setName] = useState("");
     const [last_name, setLast_name] = useState("");
-    const [birthday, setBirthday] = useState("");
+    const [age, setAge] = useState();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [type, setType] = useState(props.type);
-
-    useEffect(() => {
-        
-        
-    }, []);
-
-    function validateInputs(email, password){
-        const user = new User(email, password);
-        try{
-            user.validateLogin();
-            actions.login(email, password);
-        }catch(error){
-            alert(error.message);
+    const [type, setType] = useState("login");
+    const navigate = useNavigate();
+    
+    const submitHandler = async (e) => {
+        e.preventDefault();
+        if(type === "login"){
+            if((email === "" || email.includes("@")) && password === ""){
+                alert("Please fill all the fields");
+                return;
+            }
+            else{
+                const body = {
+                    "email": email,
+                    "password": password
+                };
+                const response = await actions.login(body);
+                if(response){
+                    const response = await actions.getUsers();
+                    if(response){
+                        
+                        navigate("/home");
+                    }
+                    
+                }
+                else{
+                    alert("Invalid credentials, please try again");
+                }
+            }
+        }
+    }
+    const signupHandler = async (e) => {
+        e.preventDefault();
+        if(password !== confirmPassword){
+            alert("Passwords do not match");
+        }
+        if(name === "" || last_name === "" || age === undefined || email === "" || password === "" || confirmPassword === ""){
+            alert("Please fill all the fields");
+        }
+        else{
+            const body = {
+                "names": name,
+                "last_name": last_name,
+                "age": parseInt(age),
+                "email": email,
+                "password": password
+            };
+            const response = await actions.signup(body);
+            if(response){
+                if(response.msg){
+                    alert(response.msg);
+                }
+                else{
+                    const response = await actions.getUsers();
+                    if(response){
+                        navigate("/home");
+                    }
+                }
+            }
+            
+            else{
+                alert("Ups, something went wrong, please try again");
+            }
         }
     }
     
     function contentForm(){
         if(type === "login"){
             return(
-                <form >
+                <form 
+                onSubmit={submitHandler}
+                >
                     <div className="form-group">
                         <label htmlFor="inputEmail">Email address</label>
                         <input type="email" value={email} onChange={(e)=>setEmail(e.target.value)}
@@ -47,9 +96,8 @@ export const LoginForm = props => {
                         className="form-control" 
                         id="inputPassword"/>
                     </div>
-                    <button type="button" 
+                    <button type="submit" 
                     className="btn btn-primary btn-block"
-                    onClick={() => validateInputs(email, password)}
                     >
                         Login
                     </button>
@@ -59,7 +107,9 @@ export const LoginForm = props => {
         }
         else if(type === "signup"){
             return(
-            <form>
+            <form
+            onSubmit={signupHandler}
+            >
                 <div className="form-group">
                     <label htmlFor="inputName">Name: </label>
                     <input type="text" 
@@ -79,12 +129,12 @@ export const LoginForm = props => {
                     placeholder="Enter your last name please" />
                 </div>
                 <div className="form-group">
-                    <label htmlFor="inputBirthday">Birthday: </label>
-                    <input type="date" 
+                    <label htmlFor="inputAge">Age: </label>
+                    <input type="number" 
                     className="form-control" 
-                    id="inputBirthday"
-                    value={birthday} 
-                    onChange={(e) => setBirthday(e.target.value)}
+                    id="inputAge"
+                    value={age} 
+                    onChange={(e) => setAge(e.target.value)}
                     placeholder="Enter your age please" />
                 </div>
                 <div className="form-group">
@@ -117,10 +167,6 @@ export const LoginForm = props => {
                 </div>
                 <button type="submit" 
                 className="btn btn-primary btn-block" 
-                onClick={(e) => {
-                    e.preventDefault();
-                    actions.signup(name, last_name, birthday, email, password, confirmPassword);
-                }}
                 >
                     Sign up
                 </button>
